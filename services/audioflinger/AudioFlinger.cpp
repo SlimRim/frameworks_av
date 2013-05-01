@@ -6216,6 +6216,12 @@ AudioFlinger::DirectAudioTrack::DirectAudioTrack(const sp<AudioFlinger>& audioFl
 }
 
 AudioFlinger::DirectAudioTrack::~DirectAudioTrack() {
+
+#ifdef SRS_PROCESSING
+    LOGD("SRS_Processing - DirectAudioTrack - OutNotify_Init: %p TID %d\n", this, gettid());
+    SRS_Processing::ProcessOutNotify(SRS_Processing::AUTO, this, false);
+#endif
+
     if (mFlag & AUDIO_OUTPUT_FLAG_LPA) {
         requestAndWaitForEffectsThreadExit();
         mAudioFlinger->deregisterClient(mAudioFlingerClient);
@@ -6295,13 +6301,11 @@ void AudioFlinger::DirectAudioTrack::mute(bool muted) {
 
 void AudioFlinger::DirectAudioTrack::setVolume(float left, float right) {
     ALOGV("DirectAudioTrack::setVolume left: %f, right: %f", left, right);
-    if(mOutputDesc && mOutputDesc->mActive) {
-        mOutputDesc->mVolumeLeft = left;
-        mOutputDesc->mVolumeRight = right;
-        mOutputDesc->stream->set_volume(mOutputDesc->stream,
-                                    left * mOutputDesc->mVolumeScale,
-                                    right* mOutputDesc->mVolumeScale);
-    }
+    mOutputDesc->mVolumeLeft = left;
+    mOutputDesc->mVolumeRight = right;
+    mOutputDesc->stream->set_volume(mOutputDesc->stream,
+                                left * mOutputDesc->mVolumeScale,
+                                right* mOutputDesc->mVolumeScale);
 }
 
 int64_t AudioFlinger::DirectAudioTrack::getTimeStamp() {
